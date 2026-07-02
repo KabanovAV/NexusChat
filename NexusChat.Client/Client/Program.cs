@@ -18,9 +18,17 @@ try
     Console.WriteLine($"на адрес {url} отправлено {bytesSent} байт(а)");
 
     var responseBytes = new byte[512];
-    var bytes = await socket.ReceiveAsync(responseBytes);
-    string response = Encoding.UTF8.GetString(responseBytes, 0, bytes);
-    Console.WriteLine(response);
+    var builder = new StringBuilder();
+    int bytes;
+
+    do
+    {
+        bytes = await socket.ReceiveAsync(responseBytes);
+        string responsePart = Encoding.UTF8.GetString(responseBytes, 0, bytes);
+        builder.Append(responsePart);
+    }
+    while (bytes > 0);
+    Console.WriteLine(builder);
 
     await socket.DisconnectAsync(true);
 }
