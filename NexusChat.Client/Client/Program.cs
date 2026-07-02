@@ -3,6 +3,8 @@ using System.Text;
 
 var port = 80;
 var url = "www.google.com";
+var response = await SocketSendRecieveAsync(url, port);
+Console.WriteLine(response);
 
 async Task<Socket?> ConnectSocketAsync(string url, int port)
 {
