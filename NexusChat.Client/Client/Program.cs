@@ -10,6 +10,8 @@ try
     Console.WriteLine($"Подключение к {url} установлено");
     Console.WriteLine($"Адрес подключения {socket.RemoteEndPoint}");
     Console.WriteLine($"Адрес приложения {socket.LocalEndPoint}");
+
+    await socket.DisconnectAsync(true);
 }
 catch (SocketException)
 {
