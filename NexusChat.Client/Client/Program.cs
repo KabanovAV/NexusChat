@@ -4,6 +4,26 @@ using System.Text;
 var port = 80;
 var url = "www.google.com";
 
+async Task<Socket?> ConnectSocketAsync(string url, int port)
+{
+    Socket tempSocket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+    try
+    {
+        await tempSocket.ConnectAsync(url, port);
+        Console.WriteLine($"Подключение к {url} установлено");
+        Console.WriteLine($"Адрес подключения {tempSocket.RemoteEndPoint}");
+        Console.WriteLine($"Адрес приложения {tempSocket.LocalEndPoint}");
+        return tempSocket;
+    }
+    catch (SocketException ex)
+    {
+        Console.WriteLine(ex.Message);
+        tempSocket.Close();
+        Console.WriteLine($"Не удалось установить подключение к {url}");
+    }
+    return null;
+}
+
 using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 try
 {
@@ -12,10 +32,12 @@ try
     Console.WriteLine($"Адрес подключения {socket.RemoteEndPoint}");
     Console.WriteLine($"Адрес приложения {socket.LocalEndPoint}");
 
-    var message = $"GET / HTTP/1.1\r\nHost: {url}\r\nConnection: close\r\n\r\n";
+    var message = $"GET / HTTP/1.1\r\nHost: {url}\r\n\r\n";
     var messageBytes = Encoding.UTF8.GetBytes(message);
     int bytesSent = await socket.SendAsync(messageBytes);
     Console.WriteLine($"на адрес {url} отправлено {bytesSent} байт(а)");
+
+    socket.Shutdown(SocketShutdown.Send);
 
     var responseBytes = new byte[512];
     var builder = new StringBuilder();
