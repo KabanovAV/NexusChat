@@ -8,6 +8,8 @@ try
 {
 	await socket.ConnectAsync(url, port);
     Console.WriteLine($"Подключение к {url} установлено");
+    Console.WriteLine($"Адрес подключения {socket.RemoteEndPoint}");
+    Console.WriteLine($"Адрес приложения {socket.LocalEndPoint}");
 }
 catch (SocketException)
 {
