@@ -23,21 +23,16 @@ async Task<Socket?> ConnectSocketAsync(string url, int port)
     }
     return null;
 }
-
-using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-try
+async Task<string> SocketSendRecieveAsync(string url, int port)
 {
-    await socket.ConnectAsync(url, port);
-    Console.WriteLine($"Подключение к {url} установлено");
-    Console.WriteLine($"Адрес подключения {socket.RemoteEndPoint}");
-    Console.WriteLine($"Адрес приложения {socket.LocalEndPoint}");
+    using var socket = await ConnectSocketAsync(url, port);
+    if (socket == null)
+        return $"Не удалось установить подключение к {url}";
 
-    var message = $"GET / HTTP/1.1\r\nHost: {url}\r\n\r\n";
+    var message = $"GET / HTTP/1.1\r\nHost: {url}\r\nConnection: Close\r\n\r\n";
     var messageBytes = Encoding.UTF8.GetBytes(message);
     int bytesSent = await socket.SendAsync(messageBytes);
     Console.WriteLine($"на адрес {url} отправлено {bytesSent} байт(а)");
-
-    socket.Shutdown(SocketShutdown.Send);
 
     var responseBytes = new byte[512];
     var builder = new StringBuilder();
@@ -50,11 +45,6 @@ try
         builder.Append(responsePart);
     }
     while (bytes > 0);
-    Console.WriteLine(builder);
+    return builder.ToString();
+}
 
-    await socket.DisconnectAsync(true);
-}
-catch (SocketException)
-{
-    Console.WriteLine($"Не удалось установить подключение к {url}");
-}
