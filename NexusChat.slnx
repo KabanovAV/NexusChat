@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="NexusChat.Client/Client/Client.csproj" />
+  <Project Path="NexusChat.Server/Server/Server.csproj" />
+</Solution>
