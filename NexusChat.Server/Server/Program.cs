@@ -1,13 +1,21 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 
-IPEndPoint ipPoint = new(IPAddress.Any, 8888);
-using Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-socket.Bind(ipPoint);
+IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+TcpListener server = new(localAddr, 8888);
 
-Console.WriteLine(socket.LocalEndPoint);
-socket.Listen(1000);
+try
+{
+    server.Start();
+    Console.WriteLine("Сервер запущен. Ожидание подключений...");
 
-Console.WriteLine("Сервер запущен. Ожидание подключений...");
-using Socket client = await socket.AcceptAsync();
-Console.WriteLine($"Адрес подключенного клиента: {client.RemoteEndPoint}");
+    while (true)
+    {
+        using var tcpClient = await server.AcceptTcpClientAsync();
+        Console.WriteLine($"Входящее подключение: {tcpClient.Client.RemoteEndPoint}");
+    }
+}
+finally
+{
+    server.Stop();
+}
