@@ -1,54 +1,48 @@
 ﻿using System.Net.Sockets;
 using System.Text;
 
-var port = 80;
-var url = "www.google.com";
-var response = await SocketSendRecieveAsync(url, port);
-Console.WriteLine(response);
+using Socket tcpClient = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-async Task<TcpClient?> ConnectSocketAsync(string url, int port)
+try
 {
-    TcpClient tcpClient = new();
-    try
-    {
-        await tcpClient.ConnectAsync(url, port);
-        Console.WriteLine($"Подключение к {url} установлено");
-        Console.WriteLine($"Адрес подключения {tcpClient.Client.RemoteEndPoint}");
-        Console.WriteLine($"Адрес приложения {tcpClient.Client.LocalEndPoint}");
-        return tcpClient;
-    }
-    catch (SocketException ex)
-    {
-        Console.WriteLine(ex.Message);
-        tcpClient.Close();
-        Console.WriteLine($"Не удалось установить подключение к {url}");
-    }
-    return null;
-}
-async Task<string> SocketSendRecieveAsync(string url, int port)
-{
-    using var tcpClient = await ConnectSocketAsync(url, port);
-    if (tcpClient == null)
-        return $"Не удалось установить подключение к {url}";
+    await tcpClient.ConnectAsync("127.0.0.1", 8888);
+    Console.WriteLine($"Подключение к {tcpClient.RemoteEndPoint} установлено");
 
-    NetworkStream stream = tcpClient.GetStream();
+    // Получение сообщения от сервера
+    var lengthBuffer = new byte[4];
+    int byteRead = 0;
 
-    var message = $"GET / HTTP/1.1\r\nHost: {url}\r\nConnection: Close\r\n\r\n";
+    while (byteRead < 4)
+    {
+        int read = await tcpClient.ReceiveAsync(lengthBuffer.AsMemory(byteRead, 4 - byteRead));
+        if (read == 0) throw new SocketException((int)SocketError.ConnectionReset);
+        byteRead += read;
+    }
+
+    int messageLength = BitConverter.ToInt32(lengthBuffer, 0);
+    var responseBytes = new byte[messageLength];
+    int totalBytes = 0;
+
+    while (totalBytes < messageLength)
+    {
+        int bytes = await tcpClient.ReceiveAsync(responseBytes.AsMemory(totalBytes, messageLength - totalBytes));
+        if (bytes == 0) throw new SocketException((int)SocketError.ConnectionReset);
+        totalBytes += bytes;
+    }
+
+    var response = Encoding.UTF8.GetString(responseBytes, 0, totalBytes);
+    Console.WriteLine(response);
+
+    // Отправка сообщения на сервера
+    var message = $"Пользователь {tcpClient.LocalEndPoint} отключился";
     var messageBytes = Encoding.UTF8.GetBytes(message);
-    await stream.WriteAsync(messageBytes);
-    Console.WriteLine($"на адрес {url} отправлено {messageBytes} байт(а)");
+    var lengthHeader = BitConverter.GetBytes(messageBytes.Length);
 
-    var responseBytes = new byte[512];
-    var builder = new StringBuilder();
-    int bytes;
-
-    do
-    {
-        bytes = await stream.ReadAsync(responseBytes);
-        string responsePart = Encoding.UTF8.GetString(responseBytes, 0, bytes);
-        builder.Append(responsePart);
-    }
-    while (bytes > 0);
-    return builder.ToString();
+    await tcpClient.SendAsync(lengthHeader);
+    await tcpClient.SendAsync(messageBytes);
+    await tcpClient.DisconnectAsync(false);
 }
-
+catch (SocketException ex)
+{
+    Console.WriteLine(ex.Message);
+}
