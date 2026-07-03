@@ -9,10 +9,15 @@ namespace Shared
         {
             var messageBytes = Encoding.UTF8.GetBytes(message);
             var lengthHeader = BitConverter.GetBytes(messageBytes.Length); // Получаем 4 байта длины сообщения
-            int bytesSend = await socket.SendAsync(lengthHeader);
-            await socket.SendAsync(messageBytes);
 
-            return bytesSend;
+            int totalBytes = 0;
+            while (totalBytes < 4)
+                totalBytes += await socket.SendAsync(lengthHeader.AsMemory(totalBytes, 4 - totalBytes));
+
+            totalBytes = 0;            
+            while(totalBytes < messageBytes.Length)
+                totalBytes += await socket.SendAsync(messageBytes.AsMemory(totalBytes, messageBytes.Length - totalBytes));
+            return totalBytes;
         }
 
         public static async Task<string> ReceiveMessage(Socket socket)
