@@ -15,14 +15,24 @@ try
     Console.WriteLine($"Адрес подключенного клиента: {tcpClient.RemoteEndPoint}");
 
     // Отправка сообщения клиенту
-    int bytesSend = await Message.SendMessage(tcpClient, "Добро пожаловат в NexusChat");
-    Console.WriteLine($"На адрес {tcpClient.RemoteEndPoint} отправлено {bytesSend} байт(а)");
+    await Message.SendMessage(tcpClient, "Добро пожаловат в NexusChat");
 
-    // Получение сообщения от клиента
-    var response = await Message.ReceiveMessage(tcpClient);
-    Console.WriteLine(response);
+    while (true)
+    {
+        // Получение сообщения от клиента
+        var response = await Message.ReceiveMessage(tcpClient);
+
+        if (response == "close") break;
+        Console.WriteLine($"Сообщение пользователя: {response}");
+
+        await Message.SendMessage(tcpClient, $"{DateTime.Now.ToShortTimeString()} Сообщение доставлено!");
+    }
 }
 catch (SocketException ex)
 {
     Console.WriteLine(ex.Message);
+}
+finally
+{
+    tcpListener.Close();
 }
