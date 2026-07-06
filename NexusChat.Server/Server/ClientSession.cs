@@ -3,14 +3,14 @@ using System.Net.Sockets;
 
 namespace Server
 {
-    internal class ClientObject
+    internal class ClientSession
     {
         public Guid Id { get; } = Guid.NewGuid();
         public Socket TcpClient { get; init; }
 
-        ServerObject _tcpServer;
+        ChatServer _tcpServer;
 
-        public ClientObject(Socket tcpClient, ServerObject tcpServer)
+        public ClientSession(Socket tcpClient, ChatServer tcpServer)
         {
             TcpClient = tcpClient;
             _tcpServer = tcpServer;

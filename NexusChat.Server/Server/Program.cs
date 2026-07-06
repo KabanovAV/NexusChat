@@ -1,4 +1,4 @@
 ﻿using Server;
 
-ServerObject tcpServer = new();
+ChatServer tcpServer = new();
 await tcpServer.Listener();

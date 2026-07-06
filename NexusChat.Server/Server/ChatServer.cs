@@ -4,11 +4,20 @@ using System.Net.Sockets;
 
 namespace Server
 {
-    internal class ServerObject
+    internal class ChatServer : IDisposable
     {
-        private readonly IPEndPoint ipEndPoint = new(IPAddress.Parse("127.0.0.1"), 8888);
-        private readonly Socket tcpListener = new(SocketType.Stream, ProtocolType.Tcp);
-        private readonly List<ClientObject> clients = [];        
+        private const string _host = "127.0.0.1";
+        private const int _port = 8888;
+
+        private readonly IPEndPoint ipEndPoint;
+        private readonly Socket tcpListener;
+        private readonly List<ClientSession> clients = [];
+
+        public ChatServer()
+        {
+            ipEndPoint = new(IPAddress.Parse(_host), _port);
+            tcpListener = new(SocketType.Stream, ProtocolType.Tcp);
+        }
 
         public async Task Listener()
         {
@@ -21,9 +30,9 @@ namespace Server
                 while (true)
                 {
                     Socket tcpClient = await tcpListener.AcceptAsync();
-                    ClientObject client = new(tcpClient, this);
+                    ClientSession client = new(tcpClient, this);
                     clients.Add(client);
-                    Task.Run(() => client.ProcessClientAsync());
+                    _ = client.ProcessClientAsync();
                 }
 
             }
@@ -39,7 +48,7 @@ namespace Server
 
         public async Task BroadcastMessageAsync(Guid id, string message)
         {
-            foreach (ClientObject client in clients)
+            foreach (ClientSession client in clients)
             {
                 if (client.Id != id)
                     await Message.SendMessage(client.TcpClient, message);
@@ -48,7 +57,7 @@ namespace Server
 
         public void RemoveConnection(Guid id)
         {
-            ClientObject? client = clients.FirstOrDefault(c => c.Id == id);
+            ClientSession? client = clients.FirstOrDefault(c => c.Id == id);
             if (client != null)
             {
                 clients.Remove(client);
@@ -58,9 +67,11 @@ namespace Server
 
         public void Disconect()
         {
-            foreach (ClientObject client in clients)
+            foreach (ClientSession client in clients)
                 client.Close();
-            tcpListener.Close();
+            Dispose();
         }
+
+        public void Dispose() => tcpListener.Dispose();
     }
 }

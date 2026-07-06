@@ -1,4 +1,4 @@
 ﻿using Client;
 
-ClientObject tcpClient = new();
+ChatClient tcpClient = new();
 await tcpClient.StartChat();

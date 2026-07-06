@@ -2,9 +2,17 @@
 
 namespace Client
 {
-    internal class ClientObject
+    internal class ChatClient : IDisposable
     {
-        protected readonly Socket tcpClient = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        private const string _host = "127.0.0.1";
+        private const int _port = 8888;
+
+        protected readonly Socket tcpClient;
+
+        public ChatClient()
+        {
+            tcpClient = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        }        
 
         /// <summary>
         /// Запуск чата
@@ -13,7 +21,7 @@ namespace Client
         {
             try
             {
-                await tcpClient.ConnectAsync("127.0.0.1", 8888);
+                await tcpClient.ConnectAsync(_host, _port);
                 await Task.Run(async () => MessageOperations.ReceiveMessageAsync(tcpClient));
                 await MessageOperations.SendMessageAsync(tcpClient);
             }
@@ -25,6 +33,8 @@ namespace Client
             {
                 tcpClient.Close();
             }
-        }        
+        }
+
+        public void Dispose() => tcpClient.Dispose();
     }
 }

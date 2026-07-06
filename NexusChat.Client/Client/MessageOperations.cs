@@ -27,11 +27,11 @@ namespace Client
                         // устанавливаем курсор в начало текущей строки
                         Console.SetCursorPosition(0, top);
                         // в текущей строке выводит полученное сообщение
-                        Console.WriteLine(response);
+                        Console.WriteLine($"\t{response}");
                         // переносим курсор на следующую строку и пользователь продолжает ввод уже на следующей строке
                         Console.SetCursorPosition(left, top + 1);
                     }
-                    else Console.WriteLine(response);
+                    else Console.WriteLine($"\t{response}");
                 }
                 catch
                 {
